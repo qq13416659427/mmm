@@ -7,7 +7,7 @@
         <span class="wire"></span>
         <span class="fun_name">用户登录</span>
       </div>
-      <el-input
+      <!-- <el-input
         placeholder="请输入手机号"
         v-model="number"
         style="width: 394px;height:45px;margin:28px 41px 0px 43px"
@@ -28,20 +28,80 @@
         style="width: 284px;height:44px;margin:25px 0px 0px 42px;"
       >
         <i slot="prefix" class="el-input__icon el-icon-key"></i>
-      </el-input>
+      </el-input>-->
+      <div class="formbox">
+        <el-form :model="form">
+          <el-form-item>
+            <el-input
+              placeholder="请输入手机号"
+              prefix-icon="el-icon-user"
+              v-model="form.phone"
+              style="height:45px;"
+            ></el-input>
+          </el-form-item>
+          <el-form-item>
+            <el-input
+              placeholder="请输入密码"
+              prefix-icon="el-icon-lock"
+              v-model="form.password"
+              style="height:45px;"
+            ></el-input>
+          </el-form-item>
+          <el-form-item>
+            <el-row>
+              <el-col :span="18">
+                <el-input
+                  placeholder="请输入验证码"
+                  prefix-icon="el-icon-key"
+                  v-model="form.code"
+                  style="height:45px;"
+                ></el-input>
+              </el-col>
+              <el-col :span="6">
+                <img src="@/assets/img/code.jpg" alt style="width:100%; margin-top:2px" />
+              </el-col>
+            </el-row>
+          </el-form-item>
+          <el-form-item>
+            <el-checkbox v-model="form.isposs">
+              我已阅读并同意
+              <el-link type="primary" style="margin-bottom:2px">用户协议</el-link>和
+              <el-link type="primary" style="margin-bottom:2px">隐私条款</el-link>
+            </el-checkbox>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" style="width:100%">登录</el-button>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" style="width:100%">注册</el-button>
+          </el-form-item>
+        </el-form>
+      </div>
     </div>
     <img src="@/assets/img/login_backimg.png" alt />
   </div>
 </template>
 
 <script>
+import axios from "axios";
 export default {
   data() {
     return {
-      number: "",
-      password: "",
-      auth_code: ""
+      form: {
+        phone: "",
+        password: "",
+        code: "",
+        isposs: "",
+        img: ""
+      }
     };
+  },
+  created() {
+    axios({
+      url: "http://127.0.0.1/heimamm/public/captcha?type=login"
+    }).then(res => {
+      console.log(res);
+    });
   }
 };
 </script>
@@ -90,10 +150,20 @@ export default {
         margin-left: 14px;
       }
     }
+    .formbox {
+      width: 394px;
+      margin: 28px 41px 0 43px;
+    }
     .el-input__inner {
       background: #ffffff;
       height: 100%;
       font-size: 13px;
+    }
+    .el-form-item {
+      margin-bottom: 25px;
+    }
+    .el-form-item__content {
+      line-height: 0px;
     }
   }
 }

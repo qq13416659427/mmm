@@ -21,6 +21,5 @@ html,
   height: 100%;
 }
 .app {
-  
 }
 </style>
