@@ -7,31 +7,9 @@
         <span class="wire"></span>
         <span class="fun_name">用户登录</span>
       </div>
-      <!-- <el-input
-        placeholder="请输入手机号"
-        v-model="number"
-        style="width: 394px;height:45px;margin:28px 41px 0px 43px"
-      >
-        <i slot="prefix" class="el-input__icon el-icon-user"></i>
-      </el-input>
-      <el-input
-        placeholder="请输入密码"
-        v-model="password"
-        style="width: 394px;height:45px;margin:25px 41px 0px 43px;"
-        :show-password="true"
-      >
-        <i slot="prefix" class="el-input__icon el-icon-lock"></i>
-      </el-input>
-      <el-input
-        placeholder="请输入验证码"
-        v-model="auth_code"
-        style="width: 284px;height:44px;margin:25px 0px 0px 42px;"
-      >
-        <i slot="prefix" class="el-input__icon el-icon-key"></i>
-      </el-input>-->
       <div class="formbox">
-        <el-form :model="form">
-          <el-form-item>
+        <el-form :model="form" :rules="rules" ref="form">
+          <el-form-item prop="phone">
             <el-input
               placeholder="请输入手机号"
               prefix-icon="el-icon-user"
@@ -39,15 +17,16 @@
               style="height:45px;"
             ></el-input>
           </el-form-item>
-          <el-form-item>
+          <el-form-item prop="password">
             <el-input
               placeholder="请输入密码"
               prefix-icon="el-icon-lock"
               v-model="form.password"
+              :show-password="true"
               style="height:45px;"
             ></el-input>
           </el-form-item>
-          <el-form-item>
+          <el-form-item prop="code">
             <el-row>
               <el-col :span="18">
                 <el-input
@@ -58,7 +37,13 @@
                 ></el-input>
               </el-col>
               <el-col :span="6">
-                <img src="@/assets/img/code.jpg" alt style="width:100%; margin-top:2px" />
+                <img
+                  :src="imgurl"
+                  alt
+                  style="width:100%;height:45px;cursor: pointer;"
+                  @click="change"
+                  ref="QRcode"
+                />
               </el-col>
             </el-row>
           </el-form-item>
@@ -70,20 +55,21 @@
             </el-checkbox>
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" style="width:100%">登录</el-button>
+            <el-button type="primary" style="width:100%" @click="login">登录</el-button>
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" style="width:100%">注册</el-button>
+            <el-button type="primary" style="width:100%" @click="logon">注册</el-button>
           </el-form-item>
         </el-form>
       </div>
     </div>
     <img src="@/assets/img/login_backimg.png" alt />
+    <popout ref="logon"></popout>
   </div>
 </template>
 
 <script>
-import axios from "axios";
+import popout from "@/components/Popout";
 export default {
   data() {
     return {
@@ -91,18 +77,53 @@ export default {
         phone: "",
         password: "",
         code: "",
-        isposs: "",
-        img: ""
-      }
+        isposs: ""
+      },
+      rules: {
+        phone: [
+          { required: true, message: "账号不能为空", trigger: "blur" },
+          { min: 11, max: 11, message: "输入有误", trigger: "blur" }
+        ],
+        password: [
+          { required: true, message: "密码不能为空", trigger: "blur" },
+          { min: 6, max: 12, message: "输入有误", trigger: "blur" }
+        ],
+        code: [
+          { required: true, message: "验证码不能为空", trigger: "blur" },
+          { min: 4, max: 4, message: "输入有误", trigger: "blur" }
+        ],
+        isposs: [{ required: true, message: "请勾选", trigger: "blur" }]
+      },
+      imgurl: process.env.VUE_APP_USER + "/captcha?type=login"
     };
   },
-  created() {
-    axios({
-      url: "http://127.0.0.1/heimamm/public/captcha?type=login"
-    }).then(res => {
-      console.log(res);
-    });
-  }
+  components: {
+    popout
+  },
+  methods: {
+    change() {
+      this.imgurl =
+        process.env.VUE_APP_USER +
+        "/captcha?type=login&t_" +
+        Math.random() * 999;
+    },
+    login() {
+      this.$refs.form.validate(res => {
+        if (res) {
+          this.$message({
+            message: "登录成功",
+            type: "success"
+          });
+        } else {
+          alert("FxXX");
+        }
+      });
+    },
+    logon() {
+      this.$refs.logon.dialogVisible = true;
+    }
+  },
+  created() {}
 };
 </script>
 
