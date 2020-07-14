@@ -73,6 +73,7 @@ export default {
   img:nth-child(4) {
     width: 30px;
     height: 30px;
+    margin-left: 100px;
     border-radius: 30px;
   }
   button {
