@@ -1,5 +1,12 @@
 <template>
-  <el-dialog :visible.sync="dialogVisible" width="600px" center class="dialog">
+  <el-dialog
+    :visible.sync="dialogVisible"
+    width="600px"
+    center
+    class="dialog"
+    :before-close="handleClose"
+    :show-close="false"
+  >
     <span slot="title">用户注册</span>
     <div class="main">
       <el-form :model="form" status-icon ref="form" label-width="61px" :rules="rules">
@@ -16,35 +23,38 @@
             <i v-else class="el-icon-plus avatar-uploader-icon"></i>
           </el-upload>
         </el-form-item>
-        <el-form-item label="昵称" prop="username">
+        <el-form-item label="昵称" prop="username" :error="errname">
           <el-input v-model="form.username"></el-input>
         </el-form-item>
-        <el-form-item label="邮箱" prop="email">
+        <el-form-item label="邮箱" prop="email" :error="erremail">
           <el-input v-model="form.email"></el-input>
         </el-form-item>
-        <el-form-item label="手机" prop="phone">
+        <el-form-item label="手机" prop="phone" :error="errphone">
           <el-input v-model="form.phone"></el-input>
         </el-form-item>
         <el-form-item label="密码" prop="password">
           <el-input v-model="form.password" type="password"></el-input>
         </el-form-item>
-        <el-form-item label="图形码" prop="bar_code">
+        <el-form-item label="图形码" prop="code" :error="errorMsg">
           <el-row>
             <el-col :span="17">
-              <el-input v-model="form.bar_code"></el-input>
+              <el-input v-model="form.code"></el-input>
             </el-col>
             <el-col :span="6">
-              <img :src="code_img" alt class="code" @click="changed" ref="file" />
+              <img :src="code_img" alt class="code" @click="changed" ref="file" v-if="bol" />
             </el-col>
           </el-row>
         </el-form-item>
-        <el-form-item label="验证码" prop="rcode">
+        <el-form-item label="验证码" prop="rcode" :error="errcode">
           <el-row>
             <el-col :span="17">
               <el-input v-model="form.rcode"></el-input>
             </el-col>
             <el-col :span="6">
-              <el-button class="code" @click="getmessage">获取用户验证码</el-button>
+              <el-button class="code" @click="getmessage" :disabled="magtime<60">
+                获取用户验证码
+                <span v-if="magtime<60">({{magtime}}秒)</span>
+              </el-button>
             </el-col>
           </el-row>
         </el-form-item>
@@ -58,18 +68,59 @@
 </template>
 
 <script>
-import { SMS_verification } from "@/api/index";
+import { SMS_verification, register } from "@/api/index";
 export default {
+  watch: {
+    dialogVisible(newvalue) {
+      if (newvalue == false) {
+        this.imageUrl = "";
+        this.$refs.form.resetFields();
+      }
+    }
+  },
   data() {
+    let valiphone = (rule, value, callback) => {
+      if (
+        /^(0|86|17951)?(13[0-9]|15[012356789]|166|17[3678]|18[0-9]|14[57])[0-9]{8}$/.test(
+          value
+        )
+      ) {
+        callback();
+      } else {
+        return callback(new Error("输入有误"));
+      }
+    };
+    let valiemail = (rule, value, callback) => {
+      console.log(value.length);
+      if (/\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*/.test(value)) {
+        callback();
+      } else {
+        return callback(new Error("输入格式有误"));
+      }
+    };
+    let valiBcode = (rule, value, callback) => {
+      if (value.length == 4) {
+        callback();
+      } else {
+        return callback(new Error("输入格式有误"));
+      }
+    };
     return {
       imageUrl: "",
+      bol: true,
+      magtime: 60,
+      errorMsg: "",
+      errphone: "",
+      errname: "",
+      erremail: "",
+      errcode: "",
       form: {
         avatar: "",
         username: "",
         email: "",
         phone: "",
         password: "",
-        bar_code: "",
+        code: "",
         rcode: ""
       },
       rules: {
@@ -78,31 +129,37 @@ export default {
           { required: true, message: "昵称不能为空", trigger: "blur" },
           { min: 2, max: 10, message: "输入有误", trigger: "blur" }
         ],
-        email: [{ required: true, message: "邮箱不能为空", trigger: "blur" }],
+        email: [
+          { required: true, message: "邮箱不能为空", trigger: "blur" },
+          { validator: valiemail, trigger: "blur" }
+        ],
         phone: [
           { required: true, message: "手机号不能为空", trigger: "blur" },
-          { min: 11, max: 11, message: "输入有误", trigger: "blur" }
+          { validator: valiphone, trigger: "change" }
         ],
         password: [
           { required: true, message: "账号不能为空", trigger: "blur" },
-          { min: 6, max: 11, message: "输入有误", trigger: "blur" }
-        ]
+          { min: 6, max: 11, message: "长度最多为11", trigger: "blur" }
+        ],
+        code: [{ validator: valiBcode, message: "验证码有误", trigger: "blur" }]
       },
       dialogVisible: false,
-      code_img: process.env.VUE_APP_USER + "/captcha?type=login"
+      code_img: process.env.VUE_APP_USER + "/captcha?type=sendsms"
     };
   },
-
-  created() {},
   methods: {
+    handleClose() {
+      return;
+    },
     changed() {
-      this.code_img =
-        process.env.VUE_APP_USER +
-        "/captcha?type=login&t_" +
-        Math.random() * 999;
+      this.bol = false;
+      this.$nextTick(() => {
+        this.bol = true;
+      });
     },
     handleAvatarSuccess(res) {
       this.form.avatar = res.data.file_path;
+      this.$refs.form.validateField(["avatar"]);
       this.imageUrl = "http://127.0.0.1/heimamm/public/" + res.data.file_path;
     },
     beforeAvatarUpload(file) {
@@ -118,26 +175,60 @@ export default {
       return isJPG && isLt2M;
     },
     getmessage() {
-      SMS_verification().then(res => {
-        console.log(res);
+      this.magtime--;
+      let num = 0;
+      this.$refs.form.validateField(["phone", "code"], errorMessage => {
+        if (errorMessage == "") {
+          num++;
+        }
       });
+      if (num == 2) {
+        let _time = setInterval(() => {
+          this.magtime--;
+          if (this.magtime == 0) {
+            this.magtime = 60;
+            clearInterval(_time);
+          }
+        }, 1000);
+        SMS_verification(this.form).then(res => {
+          if (res.code == 0) {
+            if (res.message.includes("验证码")) {
+              this.errorMsg = res.message;
+              window.location.reload();
+            } else {
+              this.errphone = res.message;
+            }
+          } else {
+            this.$message.success(res.data.captcha + "");
+          }
+        });
+      } else {
+        this.$message.error("获取失败");
+      }
     },
     verify() {
       this.$refs.form.validate(res => {
         if (res) {
-          this.$message({
-            message: "登录成功",
-            type: "success"
+          register(this.form).then(res => {
+            console.log(res);
+            if (res.code == 200) {
+              this.$message.success("成功");
+              this.dialogVisible = false;
+            } else if (res.code == 201) {
+              if (res.message.includes("邮箱")) {
+                this.erremail = res.message;
+              } else if (res.message.includes("用户名")) {
+                this.errname = res.message;
+              } else {
+                this.errcode = res.message;
+              }
+            }
           });
-        } else {
-          alert("有误");
         }
       });
     },
-    resetForm(formName) {
+    resetForm() {
       this.dialogVisible = false;
-      this.imageUrl = "";
-      this.$refs[formName].resetFields();
     }
   }
 };
@@ -169,7 +260,7 @@ export default {
     margin-left: 20px;
     cursor: pointer;
     span {
-      font-size: 11px;
+      font-size: 10px;
     }
   }
   .avatar-uploader .el-upload {

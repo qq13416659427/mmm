@@ -9,7 +9,7 @@
       </div>
       <div class="formbox">
         <el-form :model="form" :rules="rules" ref="form">
-          <el-form-item prop="phone">
+          <el-form-item prop="phone" :error="errphone">
             <el-input
               placeholder="请输入手机号"
               prefix-icon="el-icon-user"
@@ -17,7 +17,7 @@
               style="height:45px;"
             ></el-input>
           </el-form-item>
-          <el-form-item prop="password">
+          <el-form-item prop="password" :error="errpassword">
             <el-input
               placeholder="请输入密码"
               prefix-icon="el-icon-lock"
@@ -26,7 +26,7 @@
               style="height:45px;"
             ></el-input>
           </el-form-item>
-          <el-form-item prop="code">
+          <el-form-item prop="code" :error="errcode">
             <el-row>
               <el-col :span="18">
                 <el-input
@@ -43,11 +43,12 @@
                   style="width:100%;height:45px;cursor: pointer;"
                   @click="change"
                   ref="QRcode"
+                  v-if="bol"
                 />
               </el-col>
             </el-row>
           </el-form-item>
-          <el-form-item>
+          <el-form-item prop="isposs">
             <el-checkbox v-model="form.isposs">
               我已阅读并同意
               <el-link type="primary" style="margin-bottom:2px">用户协议</el-link>和
@@ -69,10 +70,17 @@
 </template>
 
 <script>
+import { plogin } from "@/api/index";
+import { tologin } from "@/api/login";
 import popout from "@/components/Popout";
 export default {
+  watch: {},
   data() {
     return {
+      bol: true,
+      errphone: "",
+      errpassword: "",
+      errcode: "",
       form: {
         phone: "",
         password: "",
@@ -92,7 +100,19 @@ export default {
           { required: true, message: "验证码不能为空", trigger: "blur" },
           { min: 4, max: 4, message: "输入有误", trigger: "blur" }
         ],
-        isposs: [{ required: true, message: "请勾选", trigger: "blur" }]
+        isposs: [
+          { required: true, message: "请勾选", trigger: "blur" },
+          {
+            validator: (rule, value, callback) => {
+              if (value === true) {
+                callback();
+              } else {
+                callback(new Error("请勾选"));
+              }
+            },
+            trigger: "change"
+          }
+        ]
       },
       imgurl: process.env.VUE_APP_USER + "/captcha?type=login"
     };
@@ -102,20 +122,35 @@ export default {
   },
   methods: {
     change() {
-      this.imgurl =
-        process.env.VUE_APP_USER +
-        "/captcha?type=login&t_" +
-        Math.random() * 999;
+      this.bol = false;
+      this.$nextTick(() => {
+        this.bol = true;
+      });
     },
     login() {
       this.$refs.form.validate(res => {
         if (res) {
-          this.$message({
-            message: "登录成功",
-            type: "success"
+          plogin(this.form).then(res => {
+            if (res.code == 200) {
+              tologin(res.data.token);
+              this.$message({
+                message: "登录成功",
+                type: "success"
+              });
+              this.$router.push("/data");
+            } else if (res.code == 202) {
+              if (res.message.includes("验证码")) {
+                this.errcode = res.message;
+                window.location.reload();
+              } else if (res.message.includes("密码")) {
+                this.errpassword = res.message;
+              } else {
+                this.errphone = res.message;
+              }
+            } else if (res.code == 201) {
+              this.errphone = res.message;
+            }
           });
-        } else {
-          alert("FxXX");
         }
       });
     },
