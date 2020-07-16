@@ -57,4 +57,19 @@ function user_data() {
         headers: { token: gettoken() }
     })
 }
-export { plogin, SMS_verification, register, user_data }
+
+function getsubjectlist(obj) {
+    return _axios({
+        url: '/subject/list',
+        headers: { token: gettoken() },
+        params: {
+            name: obj.name,
+            page: obj.page,
+            limit: obj.limit,
+            rid: obj.rid,
+            username: obj.username,
+            status: obj.status
+        }
+    })
+}
+export { plogin, SMS_verification, register, user_data, getsubjectlist }
