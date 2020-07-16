@@ -36,7 +36,7 @@
       </el-form>
     </div>
     <div class="fot">
-      <el-table :data="tableData" :border="false">
+      <el-table :data="tableData" :border="true">
         <el-table-column prop="date" label="序号"></el-table-column>
         <el-table-column prop="name" label="学科编号"></el-table-column>
         <el-table-column prop="name" label="学科名称"></el-table-column>
@@ -117,8 +117,6 @@ export default {
         text-align: center;
         color: #535559;
       }
-      input {
-      }
     }
   }
   .fot {
@@ -130,6 +128,9 @@ export default {
     border-radius: 4px;
     background: #ffffff;
     box-shadow: 0px 2px 5px 2px rgba(63, 63, 63, 0.35);
+    .el-table__header-wrapper th:nth-last-of-type(2) {
+      border-right: none;
+    }
   }
 }
 </style>
