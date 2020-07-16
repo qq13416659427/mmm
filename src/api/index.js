@@ -1,10 +1,17 @@
 import axios from 'axios'
+import { gettoken, removetoken } from './login'
+import router from '@/router/index'
 let _axios = axios.create({
     baseURL: process.env.VUE_APP_USER,
     withCredentials: true,
 })
 _axios.interceptors.response.use(function (config) {
     console.log(config);
+    if (config.data.code == 206) {
+        alert('请先登录');
+        removetoken();
+        router.push('/login');
+    }
     return config.data;
 }, function (err) {
     return Promise.reject(err);
@@ -44,4 +51,10 @@ function register(obj) {
         },
     })
 }
-export { plogin, SMS_verification, register }
+function user_data() {
+    return _axios({
+        url: '/info',
+        headers: { token: gettoken() }
+    })
+}
+export { plogin, SMS_verification, register, user_data }

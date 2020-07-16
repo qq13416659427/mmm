@@ -71,7 +71,7 @@
 
 <script>
 import { plogin } from "@/api/index";
-import { tologin } from "@/api/login";
+import { tologin, gettoken } from "@/api/login";
 import popout from "@/components/Popout";
 export default {
   watch: {},
@@ -158,7 +158,13 @@ export default {
       this.$refs.logon.dialogVisible = true;
     }
   },
-  created() {}
+  created() {
+    if (gettoken()) {
+      // 存在，跳入首页
+      console.log("TOKEN值为:", gettoken());
+      this.$router.push("/data");
+    }
+  }
 };
 </script>
 

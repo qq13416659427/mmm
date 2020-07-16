@@ -14,12 +14,13 @@ export default {};
   margin: 0;
   list-style: none;
 }
-body,
 html,
+body,
 .app {
   width: 100%;
   height: 100%;
 }
-.app {
+#nprogress .bar {
+  background: rgb(123, 255, 0) !important; //自定义颜色
 }
 </style>
